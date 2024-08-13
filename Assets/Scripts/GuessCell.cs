@@ -9,99 +9,157 @@ public class GuessCell : MonoBehaviour
     [SerializeField] private GameObject _letterPrefab;
     [SerializeField] private Color _correctColor, _incorrectColor, _inWordColor;
     
-    private TMP_InputField[] _letters;
+    private Letter[] _letters;
 
     private int _index = 0;
     private bool _canSelectNew = true;
+    private bool _active = false;
     
     void Awake()
     {
-        _letters = new TMP_InputField[WordleManager.WordLength];
+        _letters = new Letter[WordleManager.WordLength];
         
         for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            _letters[i] = Instantiate(_letterPrefab, transform).GetComponentInChildren<TMP_InputField>();
-            _letters[i].onValueChanged.AddListener(SelectNextLetter);
+            _letters[i] = Instantiate(_letterPrefab, transform).GetComponent<Letter>();
+            _letters[i].Input.onValueChanged.AddListener(SelectNextLetter);
+            //_letters[i].Input.onSelect.AddListener(OnLetterSelected);
         }
+
+        ToggleEditing(false);
     }
 
-    public void UpdateLetterCells(string word, GuessType[] guess)
+    void Update()
+    {
+        if (!_active)
+            return;
+        
+        if (!EventSystem.current.currentSelectedGameObject)
+            _letters[_index].Select();
+    }
+
+    public void UpdateLetterCells(GuessType[] guess)
     {
         for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            _letters[i].text = word[i].ToString();
-            /*_letters[i].color = guess[i] == GuessType.Correct ? _correctColor :
-                guess[i] == GuessType.InWord ? _inWordColor : _incorrectColor;*/
+            _letters[i].SetColor(guess[i]);
         }
     }
 
     public void Reset()
     {
+        _active = false;
+        
         for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            _letters[i].text = "";
-            _letters[i].interactable = false;
+            _letters[i].ClearText();
+            _letters[i].ToggleInteraction(false);
+            _letters[i].ResetColor();
         }
     }
 
     public void FocusGuess()
     {
-        for (int i = 0; i < WordleManager.WordLength; i++)
+        /*for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            _letters[i].interactable = true;
-        }
-        
+            _letters[i].ToggleInteraction(true);
+        }*/
+
+        _active = true;
         _index = 0;
+        _letters[_index].ToggleInteraction();
         _letters[_index].Select();
     }
 
-    public void DisableEditing()
+    public void ToggleEditing(bool editingOn = true)
     {
-        for (int i = 0; i < WordleManager.WordLength; i++)
+        _letters[_index].ToggleInteraction(editingOn);
+        
+        /*for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            _letters[i].interactable = false;
-        }
+            _letters[i].ToggleInteraction(editingOn);
+        }*/
     }
 
-    void SelectNextLetter(string letter)
+    public void DeleteLetter()
     {
         if (!_canSelectNew)
             return;
         
         _canSelectNew = false;
 
-        if (letter == "")
+        if (_letters[_index].GetLetter() == "")
         {
+            _letters[_index].ToggleInteraction(false);
             _index--;
-            _index = Mathf.Clamp(_index, 0, WordleManager.WordLength);
-            _letters[_index].text = "";
+            _index = Mathf.Clamp(_index, 0, WordleManager.WordLength - 1);
         }
-        else
-        {
-            _index++;
-            _index = Mathf.Clamp(_index, 0, WordleManager.WordLength);
-        }
+
+        _letters[_index].ClearText();
+        _letters[_index].ToggleInteraction();
+        _letters[_index].Select();
 
         _canSelectNew = true;
+    }
+    
+    void SelectNextLetter(string letter)
+    {
+        if (!_canSelectNew || letter == "")
+            return;
 
-        if (_index == WordleManager.WordLength)
-            Guess();
-        //EventSystem.current.SetSelectedGameObject(null);
-        else
-            _letters[_index].Select();
+        _canSelectNew = false;
+        
+        _letters[_index].ToggleInteraction(false);
+        
+        _index++;
+        _index = Mathf.Clamp(_index, 0, WordleManager.WordLength - 1);
+
+        if (_index != WordleManager.WordLength - 1 || _letters[_index].GetLetter() == "")
+            _letters[_index].ToggleInteraction();
+
+        _letters[_index].Select();
+        
+        _canSelectNew = true;
     }
 
-    void Guess(string letter = "")
+    void OnLetterSelected(string _)
     {
-        DisableEditing();
+        //print(_index);
+        for (int i = 0; i < _letters.Length; i++)
+        {
+            
+        }
         
+        _letters[_index].Select();
+    }
+
+    public void SelectAtIndex()
+    {
+        _letters[_index].Select();
+    }
+    
+    public string GetWord(string letter = "")
+    {
         string word = "";
         
         for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            word += _letters[i].text;
+            word += _letters[i].GetLetter();
         }
-        
-        Debug.Log(word);
+
+        return word;
+
+        //bool validGuess = WordleManager.Instance.CompareWords(word);
+
+        /*if (validGuess && WordleManager.CanContinue)
+            Debug.Log("Valid guess");
+        else if (WordleManager.CanContinue)
+        {
+            ToggleEditing();
+            _letters[_index].Select();
+            //_letters[_letters.Length - 1].Select();
+        }
+        else
+            Debug.Log("No more guesses");*/
     }
 }
