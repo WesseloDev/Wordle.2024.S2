@@ -1,13 +1,11 @@
-using System.Collections;
 using System.Collections.Generic;
-using TMPro;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 public class GuessCell : MonoBehaviour
 {
     [SerializeField] private GameObject _letterPrefab;
-    [SerializeField] private Color _correctColor, _incorrectColor, _inWordColor;
     
     private Letter[] _letters;
 
@@ -23,10 +21,11 @@ public class GuessCell : MonoBehaviour
         {
             _letters[i] = Instantiate(_letterPrefab, transform).GetComponent<Letter>();
             _letters[i].Input.onValueChanged.AddListener(SelectNextLetter);
-            //_letters[i].Input.onSelect.AddListener(OnLetterSelected);
         }
 
         ToggleEditing(false);
+        
+        WordleManager.Instance.onReset.AddListener(Reset);
     }
 
     void Update()
@@ -38,33 +37,22 @@ public class GuessCell : MonoBehaviour
             _letters[_index].Select();
     }
 
-    public void UpdateLetterCells(GuessType[] guess)
+    public IEnumerator UpdateLetterCells(GuessType[] guess)
     {
         for (int i = 0; i < WordleManager.WordLength; i++)
         {
-            _letters[i].SetColor(guess[i]);
+            StartCoroutine(_letters[i].Flip(guess[i]));
+            yield return new WaitForSeconds(0.2f);
         }
     }
 
     public void Reset()
     {
         _active = false;
-        
-        for (int i = 0; i < WordleManager.WordLength; i++)
-        {
-            _letters[i].ClearText();
-            _letters[i].ToggleInteraction(false);
-            _letters[i].ResetColor();
-        }
     }
 
     public void FocusGuess()
     {
-        /*for (int i = 0; i < WordleManager.WordLength; i++)
-        {
-            _letters[i].ToggleInteraction(true);
-        }*/
-
         _active = true;
         _index = 0;
         _letters[_index].ToggleInteraction();
@@ -73,12 +61,8 @@ public class GuessCell : MonoBehaviour
 
     public void ToggleEditing(bool editingOn = true)
     {
-        _letters[_index].ToggleInteraction(editingOn);
-        
-        /*for (int i = 0; i < WordleManager.WordLength; i++)
-        {
-            _letters[i].ToggleInteraction(editingOn);
-        }*/
+        if (_index != WordleManager.WordLength - 1)
+            _letters[_index].ToggleInteraction(editingOn);
     }
 
     public void DeleteLetter()
@@ -122,20 +106,10 @@ public class GuessCell : MonoBehaviour
         _canSelectNew = true;
     }
 
-    void OnLetterSelected(string _)
-    {
-        //print(_index);
-        for (int i = 0; i < _letters.Length; i++)
-        {
-            
-        }
-        
-        _letters[_index].Select();
-    }
-
     public void SelectAtIndex()
     {
-        _letters[_index].Select();
+        if (_index != WordleManager.WordLength - 1)        
+            _letters[_index].Select();
     }
     
     public string GetWord(string letter = "")
@@ -148,18 +122,5 @@ public class GuessCell : MonoBehaviour
         }
 
         return word;
-
-        //bool validGuess = WordleManager.Instance.CompareWords(word);
-
-        /*if (validGuess && WordleManager.CanContinue)
-            Debug.Log("Valid guess");
-        else if (WordleManager.CanContinue)
-        {
-            ToggleEditing();
-            _letters[_index].Select();
-            //_letters[_letters.Length - 1].Select();
-        }
-        else
-            Debug.Log("No more guesses");*/
     }
 }

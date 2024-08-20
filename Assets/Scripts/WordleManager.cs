@@ -1,9 +1,7 @@
-using System.Collections;
 using System.Collections.Generic;
+using System.Collections;
 using UnityEngine;
-using TMPro;
-using UnityEngine.EventSystems;
-using UnityEngine.UI;
+using UnityEngine.Events;
 
 public enum GuessType
 {
@@ -14,6 +12,8 @@ public enum GuessType
 
 public class WordleManager : MonoBehaviour
 {
+    public UnityEvent onWin, onLose, onGameEnd, onReset;
+    
     private static int _wordLength = 5;
     private static int _guesses = 6;
     
@@ -23,15 +23,45 @@ public class WordleManager : MonoBehaviour
     
     [SerializeField] private GameObject _button;
 
-    private List<string> _words = new List<string>();
+    //[SerializeField] private string _wordPath;
+    [SerializeField] private TextAsset _wordList;
+    [SerializeField] private List<string> _words = new List<string>();
     private string _word;
     private static int _currentGuess = 0;
 
     private static bool _gameOver = false;
-
+    private static bool _canGuess = false;
+    
     public static int WordLength => _wordLength;
+    public static bool CanGuess => _canGuess;
     public static bool CanContinue => !_gameOver && _guesses != _currentGuess;
 
+    private static WordleManager _instance;
+
+    public static WordleManager Instance
+    {
+        get
+        {
+            return _instance;
+        }
+        set
+        {
+            if (_instance)
+            {
+                Debug.LogWarning("Wordle Manager already exists. Remove second copy.");
+                Destroy(value);
+                return;
+            }
+
+            _instance = value;
+        }
+    }
+
+    void Awake()
+    {
+        Instance = this;
+    }
+    
     void Start()
     {
         _guessCells = new GuessCell[_guesses];
@@ -40,42 +70,57 @@ public class WordleManager : MonoBehaviour
         {
             _guessCells[i] = Instantiate(_guessPrefab, _guessParent.transform).GetComponent<GuessCell>();
         }
-        
-        string[] wordArray = System.IO.File.ReadAllLines(@"Assets\words_alpha.txt");
 
-        foreach (string word in wordArray)
-        {
-            if (word.Length == _wordLength)
-                _words.Add(word);
-        }   
-        
-        Restart();
+        Reset();
     }
     
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Return))
+        if (_canGuess && Input.GetKeyDown(KeyCode.Return))
         {
-            CompareWords(_guessCells[_currentGuess].GetWord());
+            StartCoroutine(CompareWords(_guessCells[_currentGuess].GetWord()));
         }
 
-        if (Input.GetKeyDown(KeyCode.Backspace))
+        if (_canGuess && Input.GetKeyDown(KeyCode.Backspace))
         {
             _guessCells[_currentGuess].DeleteLetter();
         }
     }
 
-    public void Restart()
+    [ContextMenu ("Get Words")]
+    public void GetWords()
     {
-        _word = PickWord();
-        
-        foreach (GuessCell cell in _guessCells)
+        _words.Clear();
+
+        string[] wordArray = _wordList.text.Split(' ', ',', '\n');
+
+        foreach (string word in wordArray)
         {
-            cell.Reset();
+            string newWord = word.ToLower();
+            if (_words.Contains(newWord)) continue;
+            if (HasSpecialCharacter(newWord)) continue;
+            if (newWord.Length == _wordLength)
+                _words.Add(newWord);
         }
+    }
+
+    public bool HasSpecialCharacter(string word)
+    {
+        foreach (char ch in word)
+            if (!char.IsLetter(ch))
+                return true;
+
+        return false;
+    }
+
+    public void Reset()
+    {
+        onReset.Invoke();
+        _word = PickWord();
 
         _currentGuess = 0;
         _gameOver = false;
+        _canGuess = true;
         
         _guessCells[_currentGuess].FocusGuess();
     }
@@ -87,14 +132,21 @@ public class WordleManager : MonoBehaviour
 
     bool IsValidWord(string word)
     {
-        return _words.Contains(word);
+        if (HasSpecialCharacter(word))
+            return false;
+        if (word.Length != _wordLength)
+            return false;
+        
+        return true; //_words.Contains(word);
     }
 
-    public void CompareWords(string guess)
+    public IEnumerator CompareWords(string guess)
     {
-        if (_gameOver)
-            return;
+        if (_gameOver || !_canGuess)
+            yield break;
 
+        _canGuess = false;
+        
         _guessCells[_currentGuess].ToggleEditing(false);
         
         guess = guess.ToLower();
@@ -104,10 +156,11 @@ public class WordleManager : MonoBehaviour
             Debug.Log("Invalid word: " + guess);
             _guessCells[_currentGuess].ToggleEditing(true);
             _guessCells[_currentGuess].SelectAtIndex();
-            return;
+            _canGuess = true;
+            yield break;
         }
         
-        Debug.Log("Comparing " + guess + " to " + _word);
+        //Debug.Log("Comparing " + guess + " to " + _word);
 
         GuessType[] guessInfo = new GuessType[guess.Length];
 
@@ -124,22 +177,21 @@ public class WordleManager : MonoBehaviour
             //Debug.LogError(guess[i] + " is not in word");
         }
 
-        ShowGuess(guessInfo);
+        yield return StartCoroutine(_guessCells[_currentGuess].UpdateLetterCells(guessInfo));
+        //StartCoroutine(DelayBeforeResults());
+
+        _canGuess = true;
         
         _currentGuess++;
 
         if (guess != _word && _currentGuess < _guesses)
         {
             _guessCells[_currentGuess].FocusGuess();
-            return;
+            yield break;
         }
 
         _gameOver = true;
-        _button.gameObject.SetActive(true);
+        onGameEnd.Invoke();
     }
 
-    void ShowGuess(GuessType[] guess)
-    {
-        _guessCells[_currentGuess].UpdateLetterCells(guess);
-    }
 }

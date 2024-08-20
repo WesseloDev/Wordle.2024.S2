@@ -60,7 +60,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.392}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -116,6 +116,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _letterPrefab: {fileID: 1566195975712138915, guid: 25152c2c473ff2b438d1c085858711c0, type: 3}
-  _correctColor: {r: 0.13300997, g: 0.5754717, b: 0.21383156, a: 1}
-  _incorrectColor: {r: 0.4433962, g: 0.4433962, b: 0.4433962, a: 1}
-  _inWordColor: {r: 0.764151, g: 0.6602172, b: 0.09732112, a: 1}

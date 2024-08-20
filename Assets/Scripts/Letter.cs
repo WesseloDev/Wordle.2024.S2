@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -7,6 +6,8 @@ using TMPro;
 public class Letter : MonoBehaviour
 {
     [SerializeField] private Color _correctColor, _incorrectColor, _inWordColor;
+
+    private Animator _animator;
     
     [SerializeField] private Image _background;
     private TMP_InputField _input;
@@ -15,9 +16,11 @@ public class Letter : MonoBehaviour
 
     void Awake()
     {
+        _animator = GetComponent<Animator>();
         _input = GetComponentInChildren<TMP_InputField>();
+        WordleManager.Instance.onReset.AddListener(Reset);
     }
-    
+
     public void Select()
     {
         _input.Select();
@@ -42,14 +45,37 @@ public class Letter : MonoBehaviour
         _input.text = "";
     }
 
-    public void SetColor(GuessType guess)
+    public IEnumerator Flip(GuessType guess)
     {
-        _background.color = guess == GuessType.Correct ? _correctColor :
-            guess == GuessType.InWord ? _inWordColor : _incorrectColor;
+        _animator.SetTrigger("Flip");
+
+        while (!CanSetColor())
+        {
+            yield return null;
+        }
+        
+        SetColor(GetColorFromGuess(guess));
     }
 
-    public void ResetColor()
+    private bool CanSetColor()
     {
-        _background.color = Color.white;
+        return _animator.GetCurrentAnimatorStateInfo(0).IsName("FlipUp");
+    }
+
+    private Color GetColorFromGuess(GuessType guess)
+    {
+        return guess == GuessType.Correct ? _correctColor : guess == GuessType.InWord ? _inWordColor : _incorrectColor;
+    }
+    
+    public void SetColor(Color color)
+    {
+        _background.color = color;
+    }
+
+    public void Reset()
+    {
+        ClearText();
+        ToggleInteraction(false);
+        SetColor(Color.white);
     }
 }

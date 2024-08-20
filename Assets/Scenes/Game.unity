@@ -525,9 +525,99 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 43f64f17f74c16642ba26c18a63a4274, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  onWin:
+    m_PersistentCalls:
+      m_Calls: []
+  onLose:
+    m_PersistentCalls:
+      m_Calls: []
+  onGameEnd:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1306167385}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 6
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 1
+        m_CallState: 2
+  onReset:
+    m_PersistentCalls:
+      m_Calls: []
   _guessParent: {fileID: 1670016770}
   _guessPrefab: {fileID: 3796148093255774247, guid: c6e74dba2e48ceb4b8f8f56f304eb1d2, type: 3}
   _button: {fileID: 1306167385}
+  _wordList: {fileID: 4900000, guid: c042a33c5776c2f46ac33f9e312718df, type: 3}
+  _words:
+  - power
+  - snowy
+  - there
+  - their
+  - count
+  - right
+  - night
+  - bight
+  - fight
+  - droop
+  - angry
+  - ready
+  - kirby
+  - break
+  - treat
+  - value
+  - loose
+  - lucky
+  - louie
+  - drive
+  - rocky
+  - yeast
+  - never
+  - wield
+  - poise
+  - place
+  - loser
+  - manor
+  - slack
+  - buddy
+  - stuck
+  - quiet
+  - quilt
+  - catch
+  - match
+  - batch
+  - hatch
+  - fruit
+  - write
+  - zebra
+  - green
+  - being
+  - human
+  - trees
+  - track
+  - terry
+  - goose
+  - where
+  - erase
+  - error
+  - erick
+  - arick
+  - lolly
+  - frank
+  - swamp
+  - kempt
+  - leant
+  - learn
+  - split
+  - spilt
+  - anvil
+  - annoy
+  - audio
+  - andre
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,21 +873,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-      - m_Target: {fileID: 0}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 1
-        m_CallState: 2
       - m_Target: {fileID: 873648949}
         m_TargetAssemblyTypeName: WordleManager, Assembly-CSharp
-        m_MethodName: Restart
+        m_MethodName: Reset
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
